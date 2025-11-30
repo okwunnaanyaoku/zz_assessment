@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS ornate-lead-479415-h3.product_analytics.gold_user_metrics;
+﻿DROP TABLE IF EXISTS ornate-lead-479415-h3.product_analytics.gold_user_metrics;
 CREATE TABLE ornate-lead-479415-h3.product_analytics.gold_user_metrics AS
 WITH 
 -- -------------------------
@@ -53,9 +53,9 @@ subscriptions AS (
     SELECT 
         user_id,
         MIN(start_date) AS first_paid_at,
+        MAX(is_anomalous) AS has_anomalous_subscription,
         1 AS converted_paid
     FROM ornate-lead-479415-h3.product_analytics.silver_subscriptions
-    WHERE is_anomalous = 0
     GROUP BY user_id
 ),
 
@@ -114,7 +114,7 @@ base_users AS (
 SELECT 
     bu.*,
 
-    -- Exposure Group (NOW VALID)
+    -- Exposure Group
     CASE
         WHEN bu.quickstart_exposed = 1 AND bu.trial_campaign_exposed = 1
             THEN 'quickstart_and_trial'
@@ -131,7 +131,7 @@ SELECT
     TIMESTAMP_DIFF(a.activated_at, bu.signup_at, HOUR) AS hours_to_activation,
     TIMESTAMP_DIFF(a.activated_at, bu.signup_at, DAY) AS days_to_activation,
 
-    -- QuickStart → Activation lag
+    -- QuickStart -> Activation lag
     CASE 
         WHEN bu.quickstart_exposed = 1 AND a.user_id IS NOT NULL 
         THEN TIMESTAMP_DIFF(a.activated_at, bu.quickstart_exposed_at, HOUR)
@@ -151,8 +151,9 @@ SELECT
     -- Paid conversion
     COALESCE(s.converted_paid, 0) AS paid,
     s.first_paid_at AS paid_at,
+    s.has_anomalous_subscription,
 
-    -- Trial → Paid
+    -- Trial -> Paid
     CASE 
         WHEN t.user_id IS NOT NULL AND s.user_id IS NOT NULL THEN 1
         WHEN t.user_id IS NOT NULL THEN 0

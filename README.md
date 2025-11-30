@@ -1,4 +1,4 @@
-> End-to-end analytics pipeline in BigQuery using a Bronze -> Silver -> Gold medallion architecture.
+﻿> End-to-end analytics pipeline in BigQuery using a Bronze -> Silver -> Gold medallion architecture.
 
 All SQL runs in Google BigQuery. Tables are prefixed with `ornate-lead-479415-h3.product_analytics`.
 
@@ -56,7 +56,7 @@ Final lifecycle metrics assembled in `gold_user_metrics.sql`:
 | `retained_7d`     | Any event between day 2-7 post-signup          |
 | `started_trial`   | First `start_trial` event                       |
 | `paid`            | First valid subscription after anomaly removal  |
-| `trial_to_paid`   | `paid` / `started_trial`                        |
+| `trial_to_paid`   | Indicator: 1 if a trial starter converted to paid; 0 if not; `NULL` if no trial |
 | `hours_to_activation` | Hours from signup to activation             |
 | `hours_exposure_to_activation` | Hours from first exposure to activation |
 | `event_depth_48h` | Count of all events in the first 48h post-signup   |
@@ -68,16 +68,29 @@ Monotonic funnel checks enforce `signups >= activation >= trials >= paid`.
 Mutually exclusive groups applied exactly as in SQL:
 - `quickstart_and_trial`: `quickstart = 1` and `trial_campaign = 1`
 - `quickstart_only`: `quickstart = 1` and `trial_campaign = 0`
-- `trial_only`: `quickstart = 0` and `trial_campaign = 1`
-- `control`: no QuickStart and no `promo_q3` trial exposure
+- `trial_campaign_only`: `quickstart = 0` and `trial_campaign = 1`
+- `control`: no QuickStart and no `promo_q3` trial exposure (may still have other standard campaigns)
 
-Control validity is based on stakeholder confirmation that no other overlapping experiments were active.
+Control validity is based on stakeholder confirmation that no other overlapping experiments were active; assignments are observational (no randomization enforced in SQL).
+
 
 ## Key Assumptions
-- `promo_q3` is the only trial campaign; others represent baseline acquisition.
-- Attribution hierarchy produces deterministic, reliable assignment despite multi-touch mismatches.
-- QuickStart exposure is binary (ever exposed); pre-signup exposure is intentional.
-- Activation uses `complete_quiz`, the only reliable onboarding proxy available.
+- **Campaign & exposure**
+  - `promo_q3` is the only experiment-related trial campaign; `new_user`, `retargeting`, and `summer_sale` are baseline marketing.
+  - Trial campaign exposure uses any-touch: any `promo_q3` click (pre- or post-signup) sets `trial_campaign_exposed = 1`.
+  - QuickStart exposure is binary (ever exposed); pre-signup exposures are treated as valid and kept.
+  - Exposure groups are mutually exclusive from `quickstart_exposed` x `trial_campaign_exposed`.
+  - Control is not "no marketing"; it only excludes QuickStart and `promo_q3` and may include other channels/campaigns.
+  - Stakeholder-provided: no overlapping experiments or feature rollouts in the analysis period.
+- **Attribution**
+  - Deterministic order: user `utm_source` -> earliest pre-signup marketing click -> `unknown`.
+  - Provenance stored in `utm_source_origin` in {`user_table`, `marketing_click_backfill`, `unknown`} to audit reliability.
+  - User- vs click-level UTM mismatches are expected from multi-touch; the hierarchy enforces consistency.
+- **Metrics & funnel**
+  - Activation uses `complete_quiz` (only reliable onboarding milestone available).
+  - Retention uses days 2-7 post-signup.
+  - `trial_to_paid` is a user-level indicator for trial starters (aggregate downstream).
+  - Funnel anomaly flags only unexpected paths: `trial_without_activation`, `paid_without_activation`; clean funnels remain `NULL`.
 
 ## Data Quality Audits
 Major issues surfaced and mitigations:
@@ -116,3 +129,7 @@ All tests passed or behaved as expected (minor funnel anomalies expected in real
 - `gold_layer/`: Final business metrics and funnel construction.
 - `dq_tests.sql`: Data quality and validation checks.
 - `validation_tests.sql`: Additional integrity and funnel tests.
+
+
+
+
