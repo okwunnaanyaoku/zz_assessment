@@ -126,7 +126,7 @@ All tests passed or behaved as expected (minor funnel anomalies expected in real
 ## Repository Map
 - `bronze_layer/`: Raw ingestion logic.
 - `silver_layer/`: Cleaning, parsing, deduplication, and attribution SQL.
-- `gold_layer/`: Final business metrics and funnel construction.
+- `gold_layer/`: Final Gold table with one row per user
 - `dq_tests.sql`: Data quality and validation checks.
 - `validation_tests.sql`: Additional integrity and funnel tests.
 
