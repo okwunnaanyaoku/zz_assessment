@@ -1,5 +1,3 @@
-# Senior Analyst Assignment - ZayZoon
-
 > End-to-end analytics pipeline in BigQuery using a Bronze -> Silver -> Gold medallion architecture.
 
 All SQL runs in Google BigQuery. Tables are prefixed with `ornate-lead-479415-h3.product_analytics`.
@@ -43,7 +41,7 @@ This project cleans messy assessment data, standardizes attribution, and produce
 All identified issues are either corrected in Silver or surfaced through Data Quality audits.
 
 ## Silver Layer Transformations
-- **`silver_users.sql`**: Normalize emails, canonicalize/trim `utm_source`, clean countries, parse timestamps with `SAFE.PARSE_TIMESTAMP`, deterministic attribution precedence (users value -> earliest pre-signup marketing click -> `unknown`). Provenance stored as `utm_source_origin` in {`users_table`, `marketing_click_backfill`, `unknown`}.
+- **`silver_users.sql`**: Normalize emails, canonicalize/trim `utm_source`, clean countries, parse timestamps with `SAFE.PARSE_TIMESTAMP`, deterministic attribution precedence (user value -> earliest pre-signup marketing click -> `Unknown`). Provenance stored as `utm_source_origin` in {`user_table`, `marketing_click_backfill`, `unknown`}.
 - **`silver_events.sql`**: Parse ISO/US/epoch timestamps, remove duplicates via `ROW_NUMBER`, drop missing/invalid `user_id`, flag pre-signup events, normalize event names.
 - **`silver_marketing_clicks.sql`**: Trim/lowercase UTM params, clean empty `user_id`, parse timestamps, retain click-level UTM.
 - **`silver_subscriptions.sql`**: Unified date parsing, currency normalization, flag anomalies (`end_date < start_date`, `start_date < signup_date`) which are excluded downstream.
@@ -61,8 +59,8 @@ Final lifecycle metrics assembled in `gold_user_metrics.sql`:
 | `trial_to_paid`   | `paid` / `started_trial`                        |
 | `hours_to_activation` | Hours from signup to activation             |
 | `hours_exposure_to_activation` | Hours from first exposure to activation |
-| `event_depth_48h` | Engagement score within 48h                     |
-| `funnel_anomaly`  | `clean_funnel`, `trial_without_activation`, `paid_without_activation` |
+| `event_depth_48h` | Count of all events in the first 48h post-signup   |
+| `funnel_anomaly`  | `trial_without_activation` or `paid_without_activation` (else `NULL`) |
 
 Monotonic funnel checks enforce `signups >= activation >= trials >= paid`.
 
