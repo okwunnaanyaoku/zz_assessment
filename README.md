@@ -48,21 +48,18 @@ All identified issues are either corrected in Silver or surfaced through Data Qu
 - **`silver_feature_flags.sql`**: Canonicalize QuickStart variants to `quickstart`, parse timestamps, allow intentional pre-signup exposures.
 
 ## Gold Layer Metrics
-Final lifecycle metrics assembled in `gold_user_metrics.sql`:
+Final lifecycle metrics assembled in `gold_user_metrics.sql` (one row per user):
+- Activation: first `complete_quiz` event at or after signup.
+- 7-day retention: any event from day 2 through day 7 after signup (strict window: >1 day and <=7 days post-signup).
+- Trial start: first `start_trial` event at or after signup.
+- Paid: earliest subscription `start_date` (all subscriptions counted); `has_anomalous_subscription` flags timing anomalies.
+- Trial-to-paid: per-user indicator — 1 if a trial starter later has `paid = 1`; 0 if they started a trial and never paid; `NULL` if no trial.
+- Hours to activation: hour difference between signup and first activation (`complete_quiz`).
+- Hours exposure to activation: for QuickStart-exposed users who activated, hour difference between first QuickStart exposure and activation.
+- Event depth (48h): count of all events from signup through 48 hours after signup.
+- Funnel anomaly: `trial_without_activation` (trial but no activation) or `paid_without_activation` (paid but no activation); otherwise `NULL` for a clean funnel path.
 
-| Metric            | Definition (SQL)                                |
-|-------------------|-------------------------------------------------|
-| `activation`      | First `complete_quiz` event after signup        |
-| `retained_7d`     | Any event between day 2-7 post-signup          |
-| `started_trial`   | First `start_trial` event                       |
-| `paid`            | First valid subscription after anomaly removal  |
-| `trial_to_paid`   | Indicator: 1 if a trial starter converted to paid; 0 if not; `NULL` if no trial |
-| `hours_to_activation` | Hours from signup to activation             |
-| `hours_exposure_to_activation` | Hours from first exposure to activation |
-| `event_depth_48h` | Count of all events in the first 48h post-signup   |
-| `funnel_anomaly`  | `trial_without_activation` or `paid_without_activation` (else `NULL`) |
-
-Monotonic funnel checks enforce `signups >= activation >= trials >= paid`.
+Monotonic funnel checks enforce signups >= activation >= trials >= paid.
 
 ## Experimental Exposure Groups
 Mutually exclusive groups applied exactly as in SQL:
@@ -129,6 +126,14 @@ All tests passed or behaved as expected (minor funnel anomalies expected in real
 - `gold_layer/`: Final Gold table with one row per user
 - `dq_tests.sql`: Data quality and validation checks.
 - `validation_tests.sql`: Additional integrity and funnel tests.
+
+
+
+
+
+
+
+
 
 
 
