@@ -1,6 +1,6 @@
 ﻿> End-to-end analytics pipeline in BigQuery using a Bronze -> Silver -> Gold medallion architecture.
 
-All SQL runs in Google BigQuery. Tables are prefixed with `ornate-lead-479415-h3.product_analytics`.
+All SQL were ran in Google BigQuery that's why tables are prefixed with `ornate-lead-479415-h3.product_analytics`.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -108,7 +108,7 @@ Major issues surfaced and mitigations:
 Conclusion: Post-cleaning Gold data is fit for purpose without meaningful bias from observed issues.
 
 ## Validation Tests
-Validation suite (Phase 5):
+Validation suite:
 - Integrity: row-count parity between Gold/Silver, non-null required fields, no duplicate `user_id`, binary exposure checks.
 - Metric validity: `activated`, `retained_7d`, `paid` are binary; no negative activation times; `event_depth` >= 0.
 - Funnel: monotonic signup -> activation -> trial -> paid; anomaly distribution present across categories.
