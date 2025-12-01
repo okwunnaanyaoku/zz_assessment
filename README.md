@@ -53,7 +53,7 @@ Final lifecycle metrics assembled in `gold_user_metrics.sql` (one row per user):
 - 7-day retention: any event from day 2 through day 7 after signup (strict window: >1 day and <=7 days post-signup).
 - Trial start: first `start_trial` event at or after signup.
 - Paid: earliest subscription `start_date` (all subscriptions counted); `has_anomalous_subscription` flags timing anomalies.
-- Trial-to-paid: per-user indicator — 1 if a trial starter later has `paid = 1`; 0 if they started a trial and never paid; `NULL` if no trial.
+- Trial-to-paid: per-user indicator. 1 if a trial starter has `paid = 1`; 0 if they started a trial and never paid; `NULL` if no trial.
 - Hours to activation: hour difference between signup and first activation (`complete_quiz`).
 - Hours exposure to activation: for QuickStart-exposed users who activated, hour difference between first QuickStart exposure and activation.
 - Event depth (48h): count of all events from signup through 48 hours after signup.
